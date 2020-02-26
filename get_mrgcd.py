@@ -143,7 +143,10 @@ if __name__ == "__main__":
     this_dir = path.dirname(path.realpath(__file__)) 
     log_dir = path.join(this_dir, 'logs')
     bak_dir = path.join(this_dir, 'bak')
+    data_dir = path.join(this_dir, 'data')
     makedirs(log_dir, exist_ok=True)
+    makedirs(bak_dir, exist_ok=True)
+    makedirs(data_dir, exist_ok=True)
     logger = create_log(path.join(log_dir, 'get_mrgcd.log'))
     
     backup_mrgcd = None
@@ -168,7 +171,7 @@ if __name__ == "__main__":
     
     if args.mrgcd or gather_all:
         print_and_log('Working on MRGCD data...', logger)
-        mrgcd_data_path = Path('data', 'mrgcddata.txt').resolve()
+        mrgcd_data_path = Path(data_dir, 'mrgcddata.txt').resolve()
         get_mrgcd_data(filename='mrgcddata.txt', schema='mrgcd', logger=logger)
         lf_to_crlf(mrgcd_data_path, logger=logger)
         if export_path:
@@ -189,7 +192,7 @@ if __name__ == "__main__":
                     
     if args.fws or gather_all:
         print_and_log('Working on FWS data...', logger)
-        fws_data_path = Path('data', 'fwsdata.txt').resolve()
+        fws_data_path = Path(data_dir, 'fwsdata.txt').resolve()
         get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=logger)
         lf_to_crlf(fws_data_path, logger=logger)
         if export_path:
