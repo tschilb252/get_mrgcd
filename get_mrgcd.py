@@ -12,7 +12,7 @@ from ftplib import FTP
 from pathlib import Path
 from datetime import datetime
 from os import path, makedirs
-from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 from requests import get as req_get
 
 FWS_URL = 'https://www.fws.gov/gisdownloads/R2/Water_Resources/BDA/BDA_Report.txt'
@@ -27,7 +27,7 @@ def write_backup(bak_str, backup=None):
         backup.info(bak_str)
 
 def create_log(log_path='get_mrgcd.log'):
-    logger = logging.getLogger('get_esp rotating log')
+    logger = logging.getLogger('mrgcd rotating log')
     logger.setLevel(logging.INFO)
 
     handler = TimedRotatingFileHandler(
@@ -40,13 +40,14 @@ def create_log(log_path='get_mrgcd.log'):
 
     return logger  
 
-def create_backup(log_path='mrgcd.txt'):
-    backup = logging.getLogger('get_esp rotating log')
+def create_backup(bak_path='mrgcd.bak.txt'):
+    backup = logging.getLogger('mrgcd bak log')
     backup.setLevel(logging.INFO)
-
-    handler = RotatingFileHandler(
-        log_path,
-        backupCount=100
+    
+    handler = TimedRotatingFileHandler(
+        bak_path,
+        when="midnight",
+        backupCount=14
     )
 
     backup.addHandler(handler)
@@ -59,7 +60,7 @@ def get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json'):
         config_dict = json.load(config)
     return config_dict.get(schema, None)
 
-def get_mrgcd_data(filename='mrgcddata.txt', schema='mrgccd', logger=None):
+def get_mrgcd_data(filename='mrgcd.txt', schema='mrgccd', logger=None):
     local_path = Path('data', filename).resolve()
     config = get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json')
     ip = config['ip']
@@ -84,51 +85,132 @@ def get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=None):
         with local_path.open('w') as fp:
             fp.write(fws_data.text)
 
+def lf_to_crlf(file_path, logger=None):
+    WINDOWS_LINE_ENDING = b'\r\n'
+    UNIX_LINE_ENDING = b'\n'
+    DOUBLE_LINE_ENDING = b'\r\r'
+    fp = Path(file_path).resolve()
+    if fp.is_file():
+        with fp.open('rb') as lf:
+            lf_str = lf.read().replace(DOUBLE_LINE_ENDING, b'')
+            lf_arr = lf_str.split(UNIX_LINE_ENDING)
+            lf_arr[:] = [i for i in lf_arr if not i == '']
+            crlf_str = WINDOWS_LINE_ENDING.join(lf_arr)
+        with fp.open('wb') as crlf:
+            crlf.write(crlf_str)
+        print_and_log(f'Replaced LF with CRLF for {file_path}', logger)
+    else:
+        print_and_log(
+            f'Could not replace LF with CRLF, {file_path} does not exist.', 
+            logger
+        )
+
+def move_data(data_path, to_dir, logger=None):
+    src = Path(data_path).resolve()
+    dest = Path(to_dir).resolve()
+    if src.is_file() and dest.is_dir():
+        dest = Path(dest, src.name)
+        dest.write_bytes(src.read_bytes())
+    print_and_log(
+        f'Succesfully moved data from {src} to {dest}.', 
+        logger
+    )
+    
 if __name__ == "__main__":
     
     import argparse
     cli_desc = '''
-    Downloads MRGCD and FWS data formerly used by ET toolbox and pushes  
-    data to UCHDB, uses a site's common name to map site IDs.
+    Downloads MRGCD and FWS data formerly used by ET toolbox and writes  
+    files to folder after formatting for CRLF line endings
     '''
     parser = argparse.ArgumentParser(description=cli_desc)
     parser.add_argument("-V", "--version", help="show program version", action="store_true")
     parser.add_argument("-M", "--mrgcd", help="only write mrgcd data", action="store_true")
     parser.add_argument("-F", "--fws", help="only write fws data", action="store_true")
+    parser.add_argument("-B", "--backup", help="write backup files", action="store_true")
+    parser.add_argument("-p", "--path", help="path to write formatted files to")
+    
     args = parser.parse_args()
     
     if args.version:
         print('get_mrgcd.py v1.0')
-    gather_all = False
-    if not args.mrgcd and not args.fws:
-        gather_all = True
-        
+    export_path = None
+    if args.path:
+        if Path(args.path).is_dir():
+            export_path = Path(args.path).resolve()
     s_time = datetime.now()
     bak_date = s_time.strftime('%Y_%m_%d_%H_%M')
     this_dir = path.dirname(path.realpath(__file__)) 
     log_dir = path.join(this_dir, 'logs')
+    bak_dir = path.join(this_dir, 'bak')
     makedirs(log_dir, exist_ok=True)
-    logger = create_log(path.join(this_dir, 'logs', 'get_mrgcd.log'))
-    backup = create_backup(path.join(this_dir, 'bak', f'mrgcd.txt'))
+    logger = create_log(path.join(log_dir, 'get_mrgcd.log'))
+    
+    backup_mrgcd = None
+    backup_fws = None
+    if args.mrgcd and not args.fws:
+        backup_mrgcd = create_backup(path.join(bak_dir, f'mrgcddata.bak.txt'))
+        gather_str = 'MRGCD'
+    if args.fws and not args.mrgcd:
+        backup_fws = create_backup(path.join(bak_dir, f'fwsdata.bak.txt'))
+        gather_str = 'FWS'
+    gather_all = False
+    if not args.mrgcd and not args.fws:
+        backup_mrgcd = create_backup(path.join(bak_dir, f'mrgcd.bak.txt'))
+        backup_fws = create_backup(path.join(bak_dir, f'fws.bak.txt'))
+        gather_str = 'MRGCD and FWS'
+        gather_all = True
+        
     print_and_log(
-        f'Starting ET Toolbox to HDB process {s_time:%B %d, %Y %H:%M}...\n', 
+        f'Starting gathering {gather_str} data at {s_time:%B %d, %Y %H:%M}...\n', 
         logger
     )
-    
-    print_and_log('Gathering site list from HDB...\n', logger)
     
     if args.mrgcd or gather_all:
         print_and_log('Working on MRGCD data...', logger)
         mrgcd_data_path = Path('data', 'mrgcddata.txt').resolve()
-        get_mrgcd_data(filename='mrgcddata.txt', schema='mrgccd', logger=logger)
-
+        get_mrgcd_data(filename='mrgcddata.txt', schema='mrgcd', logger=logger)
+        lf_to_crlf(mrgcd_data_path, logger=logger)
+        if export_path:
+            print_and_log(
+                f'Moving MRGCD data files to {export_path}...\n', 
+                logger
+            )
+            try:
+                move_data(mrgcd_data_path, export_path, logger=logger)
+            except Exception as err:
+                print_and_log(
+                    f'Error - could not copy file to {export_path} - {err}', 
+                    logger
+                )
+            if args.backup:
+                with mrgcd_data_path.open('r') as bak:
+                    write_backup(bak.read(), backup_mrgcd)
+                    
     if args.fws or gather_all:
         print_and_log('Working on FWS data...', logger)
         fws_data_path = Path('data', 'fwsdata.txt').resolve()
         get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=logger)
-    
-        e_time = datetime.now()
+        lf_to_crlf(fws_data_path, logger=logger)
+        if export_path:
+            print_and_log(
+                f'Moving data files to {export_path}...\n', 
+                logger
+            )
+            try: 
+                move_data(fws_data_path, export_path, logger=logger)
+                
+            except Exception as err:
+                print_and_log(
+                    f'Error - could not copy file to {export_path} - {err}', 
+                    logger
+                )
+            if args.backup:
+                with fws_data_path.open('r') as bak:
+                    write_backup(bak.read(), backup_fws)
+
+    e_time = datetime.now()
     print_and_log(
-        f'\nFinished ET Toolbox to HDB process at {e_time:%B %d, %Y %H:%M}...\n', 
+        f'\nFinished gathering {gather_str} data at {e_time:%B %d, %Y %H:%M}...\n', 
         logger
     )
