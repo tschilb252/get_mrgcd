@@ -5,7 +5,6 @@ Created on Fri Jan 24 10:08:24 2020
 @author: buriona
 """
 
-import sys
 import json
 import logging
 from ftplib import FTP
@@ -62,7 +61,7 @@ def get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json'):
 
 def get_mrgcd_data(filename='mrgcd.txt', schema='mrgccd', logger=None):
     local_path = Path('data', filename).resolve()
-    config = get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json')
+    config = get_mrgcd_config(schema='mrgcd', config_file='nano.json')
     ip = config['ip']
     data_path = config['path']
     user = config['username']
@@ -98,10 +97,10 @@ def lf_to_crlf(file_path, logger=None):
             crlf_str = WINDOWS_LINE_ENDING.join(lf_arr)
         with fp.open('wb') as crlf:
             crlf.write(crlf_str)
-        print_and_log(f'Replaced LF with CRLF for {file_path}', logger)
+        print_and_log(f'  Replaced LF with CRLF for {file_path}\n', logger)
     else:
         print_and_log(
-            f'Could not replace LF with CRLF, {file_path} does not exist.', 
+            f'  Could not replace LF with CRLF, {file_path} does not exist.\n', 
             logger
         )
 
@@ -112,7 +111,7 @@ def move_data(data_path, to_dir, logger=None):
         dest = Path(dest, src.name)
         dest.write_bytes(src.read_bytes())
     print_and_log(
-        f'Succesfully moved data from {src} to {dest}.', 
+        f'  Succesfully moved data from {src} to {dest}.', 
         logger
     )
     
@@ -121,7 +120,7 @@ if __name__ == "__main__":
     import argparse
     cli_desc = '''
     Downloads MRGCD and FWS data formerly used by ET toolbox and writes  
-    files to folder after formatting for CRLF line endings
+    files to folder after formatting for CRLF and CRCRLF line endings
     '''
     parser = argparse.ArgumentParser(description=cli_desc)
     parser.add_argument("-V", "--version", help="show program version", action="store_true")
@@ -176,18 +175,22 @@ if __name__ == "__main__":
         lf_to_crlf(mrgcd_data_path, logger=logger)
         if export_path:
             print_and_log(
-                f'Moving MRGCD data files to {export_path}...\n', 
+                f'  Moving MRGCD data files to {export_path}...\n', 
                 logger
             )
             try:
                 move_data(mrgcd_data_path, export_path, logger=logger)
             except Exception as err:
                 print_and_log(
-                    f'Error - could not copy file to {export_path} - {err}', 
+                    f'  Error - could not copy file to {export_path} - {err}', 
                     logger
                 )
             if args.backup:
                 with mrgcd_data_path.open('r') as bak:
+                    print_and_log(
+                        '  Writting bak file for MRGCD data.', 
+                        logger
+                    )
                     write_backup(bak.read(), backup_mrgcd)
                     
     if args.fws or gather_all:
@@ -197,7 +200,7 @@ if __name__ == "__main__":
         lf_to_crlf(fws_data_path, logger=logger)
         if export_path:
             print_and_log(
-                f'Moving data files to {export_path}...\n', 
+                f'  Moving data files to {export_path}...\n', 
                 logger
             )
             try: 
@@ -205,12 +208,16 @@ if __name__ == "__main__":
                 
             except Exception as err:
                 print_and_log(
-                    f'Error - could not copy file to {export_path} - {err}', 
+                    f'  Error - could not copy file to {export_path} - {err}', 
                     logger
                 )
             if args.backup:
                 with fws_data_path.open('r') as bak:
-                    write_backup(bak.read(), backup_fws)
+                    print_and_log(
+                        '  Writting bak file for FWS data.', 
+                        logger
+                    )
+                    write_backup(bak.read(), backup_fws, logger=logger)
 
     e_time = datetime.now()
     print_and_log(
