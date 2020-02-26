@@ -61,7 +61,7 @@ def get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json'):
 
 def get_mrgcd_data(filename='mrgcd.txt', schema='mrgccd', logger=None):
     local_path = Path('data', filename).resolve()
-    config = get_mrgcd_config(schema='mrgcd', config_file='nano.json')
+    config = get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json')
     ip = config['ip']
     data_path = config['path']
     user = config['username']
