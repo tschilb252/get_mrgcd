@@ -188,7 +188,7 @@ if __name__ == "__main__":
                     '  Writting bak file for MRGCD data.', 
                     logger
                 )
-                write_backup(bak.read(), backup_mrgcd)
+                write_backup(bak.read(), backup=backup_mrgcd)
                     
     if args.fws or gather_all:
         print_and_log('Working on FWS data...', logger)
@@ -217,7 +217,7 @@ if __name__ == "__main__":
                     '  Writting bak file for FWS data.', 
                     logger
                 )
-                write_backup(bak.read(), backup_fws, logger=logger)
+                write_backup(bak.read(), backup=backup_fws)
 
     e_time = datetime.now()
     print_and_log(
