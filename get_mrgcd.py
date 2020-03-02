@@ -179,16 +179,16 @@ if __name__ == "__main__":
                     f'  Error - could not copy file to {export_path} - {err}', 
                     logger
                 )
-            if args.backup:
-                backup_mrgcd = create_backup(
-                    path.join(bak_dir, f'mrgcddata.bak.txt')
+        if args.backup:
+            backup_mrgcd = create_backup(
+                path.join(bak_dir, f'mrgcddata.bak.txt')
+            )
+            with mrgcd_data_path.open('r') as bak:
+                print_and_log(
+                    '  Writting bak file for MRGCD data.', 
+                    logger
                 )
-                with mrgcd_data_path.open('r') as bak:
-                    print_and_log(
-                        '  Writting bak file for MRGCD data.', 
-                        logger
-                    )
-                    write_backup(bak.read(), backup_mrgcd)
+                write_backup(bak.read(), backup_mrgcd)
                     
     if args.fws or gather_all:
         print_and_log('Working on FWS data...', logger)
@@ -208,16 +208,16 @@ if __name__ == "__main__":
                     f'  Error - could not copy file to {export_path} - {err}', 
                     logger
                 )
-            if args.backup:
-                backup_fws = create_backup(
-                    path.join(bak_dir, f'fwsdata.bak.txt')
+        if args.backup:
+            backup_fws = create_backup(
+                path.join(bak_dir, f'fwsdata.bak.txt')
+            )
+            with fws_data_path.open('r') as bak:
+                print_and_log(
+                    '  Writting bak file for FWS data.', 
+                    logger
                 )
-                with fws_data_path.open('r') as bak:
-                    print_and_log(
-                        '  Writting bak file for FWS data.', 
-                        logger
-                    )
-                    write_backup(bak.read(), backup_fws, logger=logger)
+                write_backup(bak.read(), backup_fws, logger=logger)
 
     e_time = datetime.now()
     print_and_log(
