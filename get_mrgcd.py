@@ -183,11 +183,9 @@ if __name__ == "__main__":
             backup_mrgcd = create_backup(
                 path.join(bak_dir, f'mrgcddata.bak.txt')
             )
+            print_and_log('  Writing bak file for MRGCD data.', logger)
             with mrgcd_data_path.open('r') as bak:
-                print_and_log(
-                    '  Writting bak file for MRGCD data.', 
-                    logger
-                )
+                
                 write_backup(bak.read(), backup=backup_mrgcd)
                     
     if args.fws or gather_all:
@@ -212,11 +210,9 @@ if __name__ == "__main__":
             backup_fws = create_backup(
                 path.join(bak_dir, f'fwsdata.bak.txt')
             )
+            print_and_log('  Writing bak file for FWS data.', logger)
             with fws_data_path.open('r') as bak:
-                print_and_log(
-                    '  Writting bak file for FWS data.', 
-                    logger
-                )
+                print(bak.read())
                 write_backup(bak.read(), backup=backup_fws)
 
     e_time = datetime.now()
