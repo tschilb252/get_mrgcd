@@ -87,11 +87,10 @@ def get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=None):
 def lf_to_crlf(file_path, logger=None):
     WINDOWS_LINE_ENDING = b'\r\n'
     UNIX_LINE_ENDING = b'\n'
-    DOUBLE_LINE_ENDING = b'\r\r'
     fp = Path(file_path).resolve()
     if fp.is_file():
         with fp.open('rb') as lf:
-            lf_str = lf.read().replace(DOUBLE_LINE_ENDING, b'')
+            lf_str = lf.read()
             lf_arr = lf_str.split(UNIX_LINE_ENDING)
             lf_arr[:] = [i for i in lf_arr if not i == '']
             crlf_str = WINDOWS_LINE_ENDING.join(lf_arr)
@@ -104,6 +103,26 @@ def lf_to_crlf(file_path, logger=None):
             logger
         )
 
+def remove_empty_lines(file_path, logger=None):
+    LINE_ENDING = b'\r\r\n'
+    WINDOWS_LINE_ENDING = b'\r\n'
+    fp = Path(file_path).resolve()
+    if fp.is_file():
+        with fp.open('rb') as lf:
+            lf_str = lf.read()
+            lf_arr = lf_str.split(LINE_ENDING)
+            lf_arr[:] = [i for i in lf_arr if i]
+            crlf_str = WINDOWS_LINE_ENDING.join(lf_arr)
+        with fp.open('wb') as crlf:
+            crlf.write(crlf_str)
+        print_and_log(f'  Removed empty lines for {file_path}', logger)
+    else:
+        print_and_log(
+            f'  Could not replace remove emtpy lines for, '
+            f'{file_path} does not exist.', 
+            logger
+        )
+        
 def move_data(data_path, to_dir, logger=None):
     src = Path(data_path).resolve()
     dest = Path(to_dir).resolve()
@@ -192,7 +211,7 @@ if __name__ == "__main__":
         print_and_log('\nWorking on FWS data...', logger)
         fws_data_path = Path(data_dir, 'fwsdata.txt').resolve()
         get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=logger)
-        lf_to_crlf(fws_data_path, logger=logger)
+        remove_empty_lines(fws_data_path, logger=logger)
         if export_path:
             print_and_log(
                 f'  Moving data files to {export_path}...\n', 
