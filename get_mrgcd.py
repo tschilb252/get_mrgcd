@@ -31,15 +31,15 @@ def create_log(log_path='get_mrgcd.log'):
 
     handler = TimedRotatingFileHandler(
         log_path,
-        when="W6",
-        backupCount=1
+        when="midnight",
+        backupCount=14
     )
 
     logger.addHandler(handler)
 
     return logger  
 
-def create_backup(bak_path='mrgcd.bak.txt'):
+def create_backup(bak_path='mrgcddata.bak.txt'):
     backup = logging.getLogger('mrgcd bak log')
     backup.setLevel(logging.INFO)
     
@@ -148,18 +148,12 @@ if __name__ == "__main__":
     makedirs(data_dir, exist_ok=True)
     logger = create_log(path.join(log_dir, 'get_mrgcd.log'))
     
-    backup_mrgcd = None
-    backup_fws = None
     if args.mrgcd and not args.fws:
-        backup_mrgcd = create_backup(path.join(bak_dir, f'mrgcddata.bak.txt'))
         gather_str = 'MRGCD'
     if args.fws and not args.mrgcd:
-        backup_fws = create_backup(path.join(bak_dir, f'fwsdata.bak.txt'))
         gather_str = 'FWS'
     gather_all = False
     if not args.mrgcd and not args.fws:
-        backup_mrgcd = create_backup(path.join(bak_dir, f'mrgcd.bak.txt'))
-        backup_fws = create_backup(path.join(bak_dir, f'fws.bak.txt'))
         gather_str = 'MRGCD and FWS'
         gather_all = True
         
@@ -186,6 +180,9 @@ if __name__ == "__main__":
                     logger
                 )
             if args.backup:
+                backup_mrgcd = create_backup(
+                    path.join(bak_dir, f'mrgcddata.bak.txt')
+                )
                 with mrgcd_data_path.open('r') as bak:
                     print_and_log(
                         '  Writting bak file for MRGCD data.', 
@@ -212,6 +209,9 @@ if __name__ == "__main__":
                     logger
                 )
             if args.backup:
+                backup_fws = create_backup(
+                    path.join(bak_dir, f'fwsdata.bak.txt')
+                )
                 with fws_data_path.open('r') as bak:
                     print_and_log(
                         '  Writting bak file for FWS data.', 
