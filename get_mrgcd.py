@@ -185,8 +185,8 @@ if __name__ == "__main__":
             )
             print_and_log('  Writing bak file for MRGCD data.', logger)
             with mrgcd_data_path.open('r') as bak:
-                
-                write_backup(bak.read(), backup=backup_mrgcd)
+                bak_str = bak.read()
+            write_backup(bak_str, backup=backup_mrgcd)
                     
     if args.fws or gather_all:
         print_and_log('\nWorking on FWS data...', logger)
@@ -212,8 +212,8 @@ if __name__ == "__main__":
             )
             print_and_log('  Writing bak file for FWS data.', logger)
             with fws_data_path.open('r') as bak:
-                print(bak.read())
-                write_backup(bak.read(), backup=backup_fws)
+                bak_str = bak.read()
+            write_backup(bak_str, backup=backup_fws)
 
     e_time = datetime.now()
     print_and_log(
