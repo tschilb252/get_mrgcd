@@ -97,10 +97,10 @@ def lf_to_crlf(file_path, logger=None):
             crlf_str = WINDOWS_LINE_ENDING.join(lf_arr)
         with fp.open('wb') as crlf:
             crlf.write(crlf_str)
-        print_and_log(f'  Replaced LF with CRLF for {file_path}\n', logger)
+        print_and_log(f'  Replaced LF with CRLF for {file_path}', logger)
     else:
         print_and_log(
-            f'  Could not replace LF with CRLF, {file_path} does not exist.\n', 
+            f'  Could not replace LF with CRLF, {file_path} does not exist.', 
             logger
         )
 
@@ -158,12 +158,12 @@ if __name__ == "__main__":
         gather_all = True
         
     print_and_log(
-        f'Starting gathering {gather_str} data at {s_time:%B %d, %Y %H:%M}...\n', 
+        f'Starting gathering {gather_str} data at {s_time:%B %d, %Y %H:%M}...', 
         logger
     )
     
     if args.mrgcd or gather_all:
-        print_and_log('Working on MRGCD data...', logger)
+        print_and_log('\nWorking on MRGCD data...', logger)
         mrgcd_data_path = Path(data_dir, 'mrgcddata.txt').resolve()
         get_mrgcd_data(filename='mrgcddata.txt', schema='mrgcd', logger=logger)
         lf_to_crlf(mrgcd_data_path, logger=logger)
@@ -191,7 +191,7 @@ if __name__ == "__main__":
                 write_backup(bak.read(), backup=backup_mrgcd)
                     
     if args.fws or gather_all:
-        print_and_log('Working on FWS data...', logger)
+        print_and_log('\nWorking on FWS data...', logger)
         fws_data_path = Path(data_dir, 'fwsdata.txt').resolve()
         get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=logger)
         lf_to_crlf(fws_data_path, logger=logger)
