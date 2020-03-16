@@ -5,6 +5,7 @@ Created on Fri Jan 24 10:08:24 2020
 @author: buriona
 """
 
+import os
 import json
 import logging
 from ftplib import FTP
@@ -146,6 +147,7 @@ if __name__ == "__main__":
     parser.add_argument("-M", "--mrgcd", help="only write mrgcd data", action="store_true")
     parser.add_argument("-F", "--fws", help="only write fws data", action="store_true")
     parser.add_argument("-B", "--backup", help="write backup files", action="store_true")
+    parser.add_argument("-D", "--dcs", help="trigger OPENDCS procedure", action="store_true")
     parser.add_argument("-p", "--path", help="path to write formatted files to")
     
     args = parser.parse_args()
@@ -233,7 +235,16 @@ if __name__ == "__main__":
             with fws_data_path.open('r') as bak:
                 bak_str = bak.read()
             write_backup(bak_str, backup=backup_fws)
-
+    
+    if args.dcs:
+        OPENDCS_LOGFILE_PATH = path.join(log_dir, 'open_dcs.log')
+        OPENDCS_CMD = f'rs -d3 -l {OPENDCS_LOGFILE_PATH} MRGCD-SHEF'
+        opendcs_result = os.system(OPENDCS_CMD)
+        print_and_log(
+            f'\nCommand {OPENDCS_CMD} returned code {opendcs_result}...\n', 
+            logger
+        )
+        
     e_time = datetime.now()
     print_and_log(
         f'\nFinished gathering {gather_str} data at {e_time:%B %d, %Y %H:%M}...\n', 
