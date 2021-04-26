@@ -116,6 +116,3 @@ dmypy.json
 # bak files
 /bak
 
-# config file for mrgcd data retrival
-ftp_config.json
-
