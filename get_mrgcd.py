@@ -54,21 +54,21 @@ def create_backup(bak_path='mrgcddata.bak.txt'):
 
     return backup  
 
-def get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json'):
+def get_ftp_config(schema='mrgcd', config_file='ftp_config.json'):
     config_path = Path(config_file).resolve()
     with config_path.open('r') as config:
         config_dict = json.load(config)
     return config_dict.get(schema, None)
 
-def get_mrgcd_data(filename='mrgcd.txt', schema='mrgccd', logger=None):
-    local_path = Path('data', filename).resolve()
-    config = get_mrgcd_config(schema='mrgcd', config_file='ftp_config.json')
+def get_ftp_data(filename='mrgcd.txt', schema='mrgccd', local_dir='data', logger=None):
+    config = get_ftp_config(schema=schema, config_file='ftp_config.json')
     ip = config['ip']
     data_path = config['path']
     user = config['username']
     password = config['password']
     print_and_log(f'  Logging into {ip}...', logger)
     remote_dir = Path(data_path).as_posix()
+    local_path = Path(local_dir, filename).resolve()
     remote_file = Path(remote_dir, filename).as_posix()
     with FTP(ip) as ftp:
         ftp.login(user=user, passwd=password)
@@ -148,6 +148,7 @@ if __name__ == "__main__":
     parser.add_argument("-F", "--fws", help="only write fws data", action="store_true")
     parser.add_argument("-B", "--backup", help="write backup files", action="store_true")
     parser.add_argument("-D", "--dcs", help="trigger OPENDCS procedure", action="store_true")
+    parser.add_argument("--proc_name", help="overide default DCS proc name", default='MRGCD-SHEF')
     parser.add_argument("-p", "--path", help="path to write formatted files to")
     
     args = parser.parse_args()
@@ -186,7 +187,7 @@ if __name__ == "__main__":
     if args.mrgcd or gather_all:
         print_and_log('\nWorking on MRGCD data...', logger)
         mrgcd_data_path = Path(data_dir, 'mrgcddata.txt').resolve()
-        get_mrgcd_data(filename='mrgcddata.txt', schema='mrgcd', logger=logger)
+        get_ftp_data(filenames=['mrgcddata.txt'], schema='mrgcd', logger=logger)
         lf_to_crlf(mrgcd_data_path, logger=logger)
         if export_path:
             print_and_log(
@@ -202,7 +203,7 @@ if __name__ == "__main__":
                 )
         if args.backup:
             backup_mrgcd = create_backup(
-                path.join(bak_dir, f'mrgcddata.bak.txt')
+                path.join(bak_dir, 'mrgcddata.bak.txt')
             )
             print_and_log('  Writing bak file for MRGCD data.', logger)
             with mrgcd_data_path.open('r') as bak:
@@ -229,16 +230,44 @@ if __name__ == "__main__":
                 )
         if args.backup:
             backup_fws = create_backup(
-                path.join(bak_dir, f'fwsdata.bak.txt')
+                path.join(bak_dir, 'fwsdata.bak.txt')
             )
             print_and_log('  Writing bak file for FWS data.', logger)
             with fws_data_path.open('r') as bak:
                 bak_str = bak.read()
             write_backup(bak_str, backup=backup_fws)
     
+    if args.csas:
+        print_and_log('\nWorking on CSAS data...', logger)
+        csas_filenames = ['PTSP.dat', 'SASP.dat', 'SBSG.dat', 'SBSP.dat']
+        for csas_filename in csas_filenames:
+            csas_data_path = Path(data_dir, csas_filename).resolve()
+            get_ftp_data(filename=csas_filename, schema='csas', logger=logger)
+            lf_to_crlf(csas_data_path, logger=logger)
+            if export_path:
+                print_and_log(
+                    f'  Moving CSAS data files to {export_path}...\n', 
+                    logger
+                )
+                try:
+                    move_data(csas_data_path, export_path, logger=logger)
+                except Exception as err:
+                    print_and_log(
+                        f'  Error - could not copy file to {export_path} - {err}', 
+                        logger
+                    )
+            if args.backup:
+                backup_csas = create_backup(
+                    path.join(bak_dir, f'{csas_filename}.bak')
+                )
+                print_and_log('  Writing bak file for CSAS data.', logger)
+                with mrgcd_data_path.open('r') as bak:
+                    bak_str = bak.read()
+                write_backup(bak_str, backup=backup_mrgcd)
+            
     if args.dcs:
         OPENDCS_LOGFILE_PATH = path.join(log_dir, 'open_dcs.log')
-        OPENDCS_CMD = f'rs -d3 -l {OPENDCS_LOGFILE_PATH} MRGCD-SHEF'
+        OPENDCS_CMD = f'rs -d3 -l {OPENDCS_LOGFILE_PATH} {args.proc_name}'
         opendcs_result = os.system(OPENDCS_CMD)
         print_and_log(
             f'\nCommand {OPENDCS_CMD} returned code {opendcs_result}...\n', 
