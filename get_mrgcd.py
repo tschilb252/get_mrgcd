@@ -288,7 +288,7 @@ if __name__ == "__main__":
                 print_and_log('  Writing bak file for CSAS data.', logger)
                 with csas_data_path.open('r') as bak:
                     bak_str = bak.read()
-                write_backup(bak_str, backup=backup_mrgcd)
+                write_backup(bak_str, backup=backup_csas)
             
     if args.dcs:
         OPENDCS_LOGFILE_PATH = path.join(log_dir, 'open_dcs.log')
