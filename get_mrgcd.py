@@ -146,6 +146,7 @@ if __name__ == "__main__":
     parser.add_argument("-V", "--version", help="show program version", action="store_true")
     parser.add_argument("-M", "--mrgcd", help="only write mrgcd data", action="store_true")
     parser.add_argument("-F", "--fws", help="only write fws data", action="store_true")
+    parser.add_argument("-C", "--csas", help="only write csas data", action="store_true")
     parser.add_argument("-B", "--backup", help="write backup files", action="store_true")
     parser.add_argument("-D", "--dcs", help="trigger OPENDCS procedure", action="store_true")
     parser.add_argument("--proc_name", help="overide default DCS proc name", default='MRGCD-SHEF')
