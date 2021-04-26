@@ -262,7 +262,7 @@ if __name__ == "__main__":
         print_and_log('\nWorking on CSAS data...', logger)
         csas_filenames = ['PTSP.dat', 'SASP.dat', 'SBSG.dat', 'SBSP.dat']
         csas_data_paths = [Path(data_dir, i).resolve() for i in csas_filenames]
-        get_sftp_data(filepaths=csas_filenames, schema='csas', logger=logger)
+        get_sftp_data(filenames=csas_filenames, schema='csas', logger=logger)
         for i, csas_data_path in enumerate(csas_data_paths):
             lf_to_crlf(csas_data_path, logger=logger)
             if export_path:
