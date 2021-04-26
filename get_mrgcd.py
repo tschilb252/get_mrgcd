@@ -9,6 +9,7 @@ import os
 import json
 import logging
 from ftplib import FTP
+import paramiko
 from pathlib import Path
 from datetime import datetime
 from os import path, makedirs
@@ -76,6 +77,22 @@ def get_ftp_data(filename='mrgcd.txt', schema='mrgccd', local_dir='data', logger
         with local_path.open('wb') as fp:
             ftp.retrbinary(f'RETR {remote_file}', fp.write)
 
+def get_sftp_data(filenames, schema='csas', local_dir='data', logger=None):
+    config = get_ftp_config(schema=schema, config_file='ftp_config.json')
+    host = config['ip']
+    data_path = config['path']
+    user = config['username']
+    password = config['password']
+    print_and_log(f'  Logging into {host}...', logger)
+    remote_dir = Path(data_path).as_posix()
+    with paramiko.Transport((host,22)).connect(None,user,password) as transport:
+        with paramiko.SFTPClient.from_transport(transport) as sftp:
+            for filename in filenames:
+                local_path = Path(local_dir, filename).resolve()
+                remote_file = Path(remote_dir, filename).as_posix()
+                print_and_log(f'  Saving {remote_file} to {local_path}', logger)
+                sftp.get(remote_file, local_path)
+            
 def get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=None):
     local_path = Path('data', filename).resolve()
     print_and_log(f'  Downloading data from {url}...', logger)
@@ -244,9 +261,9 @@ if __name__ == "__main__":
     if args.csas:
         print_and_log('\nWorking on CSAS data...', logger)
         csas_filenames = ['PTSP.dat', 'SASP.dat', 'SBSG.dat', 'SBSP.dat']
-        for csas_filename in csas_filenames:
-            csas_data_path = Path(data_dir, csas_filename).resolve()
-            get_ftp_data(filename=csas_filename, schema='csas', logger=logger)
+        csas_data_paths = [Path(data_dir, i).resolve() for i in csas_filenames]
+        get_sftp_data(filepaths=csas_filenames, schema='csas', logger=logger)
+        for i, csas_data_path in enumerate(csas_data_paths):
             lf_to_crlf(csas_data_path, logger=logger)
             if export_path:
                 print_and_log(
@@ -262,10 +279,10 @@ if __name__ == "__main__":
                     )
             if args.backup:
                 backup_csas = create_backup(
-                    path.join(bak_dir, f'{csas_filename}.bak')
+                    path.join(bak_dir, f'{csas_filenames[i]}.bak')
                 )
                 print_and_log('  Writing bak file for CSAS data.', logger)
-                with mrgcd_data_path.open('r') as bak:
+                with csas_data_path.open('r') as bak:
                     bak_str = bak.read()
                 write_backup(bak_str, backup=backup_mrgcd)
             
