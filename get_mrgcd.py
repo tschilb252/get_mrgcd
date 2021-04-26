@@ -85,7 +85,8 @@ def get_sftp_data(filenames, schema='csas', local_dir='data', logger=None):
     password = config['password']
     print_and_log(f'  Logging into {host}...', logger)
     remote_dir = Path(data_path).as_posix()
-    transport = paramiko.Transport((host,22)).connect(None,user,password)
+    transport = paramiko.Transport((host,22))
+    transport.connect(None, user, password)
     sftp = paramiko.SFTPClient.from_transport(transport)
     for filename in filenames:
         local_path = Path(local_dir, filename).resolve()
