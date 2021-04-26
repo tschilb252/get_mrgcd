@@ -179,6 +179,9 @@ if __name__ == "__main__":
     if not args.mrgcd and not args.fws:
         gather_str = 'MRGCD and FWS'
         gather_all = True
+    if args.csas:
+        gather_str = 'CSAS'
+        gather_all = False
         
     print_and_log(
         f'Starting gathering {gather_str} data at {s_time:%B %d, %Y %H:%M}...', 
@@ -188,7 +191,7 @@ if __name__ == "__main__":
     if args.mrgcd or gather_all:
         print_and_log('\nWorking on MRGCD data...', logger)
         mrgcd_data_path = Path(data_dir, 'mrgcddata.txt').resolve()
-        get_ftp_data(filenames=['mrgcddata.txt'], schema='mrgcd', logger=logger)
+        get_ftp_data(filenames='mrgcddata.txt', schema='mrgcd', logger=logger)
         lf_to_crlf(mrgcd_data_path, logger=logger)
         if export_path:
             print_and_log(
