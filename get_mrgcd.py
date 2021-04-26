@@ -85,13 +85,16 @@ def get_sftp_data(filenames, schema='csas', local_dir='data', logger=None):
     password = config['password']
     print_and_log(f'  Logging into {host}...', logger)
     remote_dir = Path(data_path).as_posix()
-    with paramiko.Transport((host,22)).connect(None,user,password) as transport:
-        with paramiko.SFTPClient.from_transport(transport) as sftp:
-            for filename in filenames:
-                local_path = Path(local_dir, filename).resolve()
-                remote_file = Path(remote_dir, filename).as_posix()
-                print_and_log(f'  Saving {remote_file} to {local_path}', logger)
-                sftp.get(remote_file, local_path)
+    transport = paramiko.Transport((host,22)).connect(None,user,password)
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    for filename in filenames:
+        local_path = Path(local_dir, filename).resolve()
+        remote_file = Path(remote_dir, filename).as_posix()
+        print_and_log(f'  Saving {remote_file} to {local_path}', logger)
+        sftp.get(remote_file, local_path)
+
+    if sftp: sftp.close()
+    if transport: transport.close()
             
 def get_fws_data(url=FWS_URL, filename='fwsdata.txt', logger=None):
     local_path = Path('data', filename).resolve()
