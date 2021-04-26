@@ -1,0 +1,14 @@
+{
+    "mrgcd": {
+        "ip": "66.162.42.50",
+        "password": "tagurit",
+        "path": "awards/USBOR",
+        "username": "mrgcd"
+    },
+     "csas": {
+        "ip": "198.12.230.36",
+        "password": "Csnow3040#",
+        "path": "/home/csas/public_html/snowstudies.com/usbr",
+        "username": "csas"
+    }
+}
