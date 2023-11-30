@@ -48,7 +48,7 @@ def create_backup(bak_path='mrgcddata.bak.txt'):
     handler = TimedRotatingFileHandler(
         bak_path,
         when="midnight",
-        backupCount=14
+        backupCount=60
     )
 
     backup.addHandler(handler)
